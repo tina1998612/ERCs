@@ -9,7 +9,7 @@ import "./IVerifier.sol";
 /**
  * @dev Implementation of the {IERC7007} interface.
  */
-contract ERC7007 is ERC165, IERC7007, ERC721URIStorage {
+contract ERC7007_zkml is ERC165, IERC7007, ERC721URIStorage {
     address public immutable verifier;
 
     /**
