@@ -47,7 +47,9 @@ contract ERC7007_opml is ERC165, IERC7007, ERC721URIStorage {
             )
         );
         _setTokenURI(tokenId, tokenUri);
-        tokenIdToRequestId[tokenId] = IOpmlLib(opmlLib).initOpmlRequest(keccak256(prompt));
+        tokenIdToRequestId[tokenId] = IOpmlLib(opmlLib).initOpmlRequest(prompt);
+        IOpmlLib(opmlLib).uploadResult(tokenIdToRequestId[tokenId], aigcData);
+
         emit Mint(tokenId, prompt, aigcData, uri, proof);
     }
 
@@ -60,7 +62,8 @@ contract ERC7007_opml is ERC165, IERC7007, ERC721URIStorage {
         bytes calldata proof
     ) public view virtual override returns (bool success) {
         uint256 tokenId = uint256(keccak256(prompt));
-        return IOpmlLib(opmlLib).isFinalized(tokenIdToRequestId[tokenId]);
+        bytes32 output = bytes32(IOpmlLib(opmlLib).getOutput(tokenIdToRequestId[tokenId]));
+        return IOpmlLib(opmlLib).isFinalized(tokenIdToRequestId[tokenId]) && (output == keccak256(aigcData));
     }
 
     /**
