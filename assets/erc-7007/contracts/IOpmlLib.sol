@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.23;
 
 interface IOpmlLib {
     function initOpmlRequest(bytes calldata input) external returns (uint256 requestId); // we can construct the initialState using the input, can replace input with prompt (string)
