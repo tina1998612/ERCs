@@ -13,8 +13,6 @@ contract ERC7007Opml is ERC165, IERC7007Updatable, ERC721URIStorage {
     address public immutable opmlLib;
     mapping (uint256 => uint256) public tokenIdToRequestId;
 
-    mapping(bytes => bytes) public promptToAIGCData;
-
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
@@ -42,9 +40,9 @@ contract ERC7007Opml is ERC165, IERC7007Updatable, ERC721URIStorage {
         string calldata uri,
         bytes calldata proof
     ) external returns (uint256 tokenId) {
-        bytes memory aigcData = promptToAIGCData[prompt];
-        require(verify(prompt, aigcData, proof), "ERC7007: invalid proof");
         tokenId = uint256(keccak256(prompt));
+        bytes memory aigcData = IOpmlLib(opmlLib).getOutput(tokenIdToRequestId[tokenId]);
+        require(verify(prompt, aigcData, proof), "ERC7007: invalid proof");
         _safeMint(to, tokenId);
         string memory tokenUri = string(
             abi.encodePacked(
