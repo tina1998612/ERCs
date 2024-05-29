@@ -8,9 +8,12 @@ import "./IVerifier.sol";
 
 /**
  * @dev Implementation of the {IERC7007} interface.
+
  */
 contract ERC7007Zkml is ERC165, IERC7007, ERC721URIStorage {
     address public immutable verifier;
+
+    mapping(bytes => bytes) public promptToAIGCData;
 
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
@@ -29,10 +32,10 @@ contract ERC7007Zkml is ERC165, IERC7007, ERC721URIStorage {
     function mint(
         address to,
         bytes calldata prompt,
-        bytes calldata aigcData,
         string calldata uri,
         bytes calldata proof
-    ) public virtual override returns (uint256 tokenId) {
+    ) public virtual returns (uint256 tokenId) {
+        bytes memory aigcData = promptToAIGCData[prompt];
         require(verify(prompt, aigcData, proof), "ERC7007: invalid proof");
         tokenId = uint256(keccak256(prompt));
         _safeMint(to, tokenId);
@@ -43,12 +46,21 @@ contract ERC7007Zkml is ERC165, IERC7007, ERC721URIStorage {
                 ', "prompt": "',
                 string(prompt),
                 '", "aigc_data": "',
-                string(aigcData),
+                string(promptToAIGCData[prompt]),
                 '"}'
             )
         );
         _setTokenURI(tokenId, tokenUri);
-        emit Mint(to, tokenId, prompt, aigcData, uri, proof);
+    }
+
+    function addAigcData(
+        uint256 tokenId,
+        bytes calldata prompt,
+        bytes calldata aigcData,
+        bytes calldata proof
+    ) public virtual override {
+        promptToAIGCData[prompt] = aigcData;
+        emit AigcData(tokenId, prompt, aigcData, proof);
     }
 
     /**
@@ -56,7 +68,7 @@ contract ERC7007Zkml is ERC165, IERC7007, ERC721URIStorage {
      */
     function verify(
         bytes calldata prompt,
-        bytes calldata aigcData,
+        bytes memory aigcData,
         bytes calldata proof
     ) public view virtual override returns (bool success) {
         return

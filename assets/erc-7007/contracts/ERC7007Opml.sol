@@ -13,6 +13,8 @@ contract ERC7007Opml is ERC165, IERC7007Updatable, ERC721URIStorage {
     address public immutable opmlLib;
     mapping (uint256 => uint256) public tokenIdToRequestId;
 
+    mapping(bytes => bytes) public promptToAIGCData;
+
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
@@ -24,16 +26,24 @@ contract ERC7007Opml is ERC165, IERC7007Updatable, ERC721URIStorage {
         opmlLib = opmlLib_;
     }
 
-    /**
-     * @dev See {IERC7007-mint}.
-     */
-    function mint(
-        address to,
+    function addAigcData(
+        uint256 tokenId,
         bytes calldata prompt,
         bytes calldata aigcData,
+        bytes calldata proof
+    ) public virtual override {
+        tokenIdToRequestId[tokenId] = IOpmlLib(opmlLib).initOpmlRequest(prompt);
+        IOpmlLib(opmlLib).uploadResult(tokenIdToRequestId[tokenId], aigcData);
+        emit AigcData(tokenId, prompt, aigcData, proof);
+    }
+
+    function mint(address to,
+        bytes calldata prompt,
         string calldata uri,
         bytes calldata proof
-    ) public returns (uint256 tokenId) {
+    ) external returns (uint256 tokenId) {
+        bytes memory aigcData = promptToAIGCData[prompt];
+        require(verify(prompt, aigcData, proof), "ERC7007: invalid proof");
         tokenId = uint256(keccak256(prompt));
         _safeMint(to, tokenId);
         string memory tokenUri = string(
@@ -48,11 +58,6 @@ contract ERC7007Opml is ERC165, IERC7007Updatable, ERC721URIStorage {
             )
         );
         _setTokenURI(tokenId, tokenUri);
-        
-        tokenIdToRequestId[tokenId] = IOpmlLib(opmlLib).initOpmlRequest(prompt);
-        IOpmlLib(opmlLib).uploadResult(tokenIdToRequestId[tokenId], aigcData);
-
-        emit Mint(to, tokenId, prompt, aigcData, uri, proof);
     }
 
     /**
@@ -60,7 +65,7 @@ contract ERC7007Opml is ERC165, IERC7007Updatable, ERC721URIStorage {
      */
     function verify(
         bytes calldata prompt,
-        bytes calldata aigcData,
+        bytes memory aigcData,
         bytes calldata proof
     ) public view virtual override returns (bool success) {
         uint256 tokenId = uint256(keccak256(prompt));

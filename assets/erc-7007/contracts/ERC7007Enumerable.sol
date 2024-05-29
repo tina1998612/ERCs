@@ -36,11 +36,10 @@ abstract contract ERC7007Enumerable is ERC7007Zkml, IERC7007Enumerable {
     function mint(
         address to,
         bytes calldata prompt_,
-        bytes calldata aigcData,
         string calldata uri,
         bytes calldata proof
-    ) public virtual override(ERC7007Zkml, IERC7007) returns (uint256 tokenId_) {
-        tokenId_ = ERC7007Zkml.mint(to, prompt_, aigcData, uri, proof);
+    ) public virtual override returns (uint256 tokenId_) {
+        tokenId_ = ERC7007Zkml.mint(to, prompt_, uri, proof);
         prompt[tokenId_] = string(prompt_);
         tokenId[prompt_] = tokenId_;
     }
